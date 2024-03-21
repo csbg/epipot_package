@@ -13,3 +13,5 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+URL: https://github.com/csbg/epipot_package
+BugReports: https://github.com/csbg/epipot_package/issues
