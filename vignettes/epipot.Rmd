@@ -1,0 +1,140 @@
+---
+title: "epipot"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{epipot}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+In this vignette we will go through the process of identifying cell-wise epigenetic potential genes using single cell dataset. We start with two Single-cell datasets i.e. single cell atac-seq and single cell rna-seq. Both these datasets needs to be processed to get cell types. In case the cell-type annotation is not done/difficult for scATAC-seq, cell type labels can be transferred from scRNA-seq. There are multiple ways to do label transfer, we show one way of doing it using scglue pipeline in a separate jupyter notebook. 
+
+```{r setup}
+library(epiPot)
+```
+
+
+### Set path and environment
+
+```{r environment, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+source('epigenetic_potential_utilities.R')
+# lung_case_path <- file.path(path, 'results','motif')
+```
+
+### Load pre-processed objects
+
+In this vignette we assume that the user has single-cell datasets with cell-type annotations for both scRNA-seq and scATAC-seq. Another assumption here is that both datasets have some if not all cell types matching each other. (Note: make sure you dont have situation like cell types in scRNAseq has T-cell and scATAC-seq has T_cell or t_cell)
+
+```{r load_objects, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+lung_rna <- read_rds('data/GSE161382/seurat_lung.rds')
+signac_ig <- read_rds('data/GSE161381/signac_ig.rds')
+```
+
+### Main function call
+Once the pre-requisite for calling the main epigenetic potential function we need to have following parameters \
+1. Pair of count matrices from scATAC-seq and scRNA-seq in sparse format (default in Seurat) \
+2. Cell type annotation vector of cells of scATAC-seq and scRNA-seq (In case you need to transfer labels from scRNA-seq to scATAC-seq or vice a versa please refer to the jupyter notebook) \
+3. Sample vector for the cells \
+
+```{r main_function, eval=TRUE, warning=FALSE, message=FALSE, echo=TRUE}
+
+# main workflow for cell-wise epigenetic potential
+epigenetic_potential <- function(atac_counts, 
+                                 atac_cell_types,
+                                 atac_samples,
+                                 rna_counts,
+                                 rna_cell_types,
+                                 rna_samples) {
+  
+  # create aggregate matrix from count matrix
+  rna_aggr_mat <- matrix_aggregate(
+    rna_counts, 
+    rna_cell_types,
+    rna_samples
+  )
+  atac_aggr_mat <- matrix_aggregate(
+    atac_counts, 
+    atac_cell_types,
+    atac_samples
+  )
+  
+  # Z-score scaling of the aggregate matrices
+  rna_zr <- data.frame(t(scale(t(rna_aggr_mat))) )
+  atac_zr <- data.frame(t(scale(t(atac_aggr_mat))) )
+  
+  # annotate peaks to genes for ATAC-seq
+  atac_zr_anno <- annotate_peaks_pseudobulk(atac_zr)
+  
+  # create merged matrix of scRNA-seq and scATAC-seq data
+  merged_mat <- create_merged_matrix(atac_zr_anno, rna_zr)
+  
+  # create metadata for model matrix
+  design_meta <- create_design_matrix(atac_zr_anno, rna_zr)
+  
+  # create model matrix
+  model <- model.matrix(~ 0 + cell / tech, data = design_meta)
+  
+  # arrange columns as per model matrix
+  merged_matrix <- merged_mat[, row.names(model)]
+  
+  # create limma model
+  fit <- lmFit(merged_matrix, model)
+  fit <- eBayes(fit)
+  
+  # parse limma results
+  res <- parse_limma_res(fit)
+  res
+}
+
+epipot <- epigenetic_potential(
+  signac_ig@assays$peaks@counts,  # Sparse count matrix (scATAC-seq)
+  signac_ig@meta.data$cell_type,  # Meta data column for cell-type (scATAC-seq)
+  signac_ig@meta.data$orig.ident, # Meta data column for sample id (scATAC-seq)
+  lung_rna@assays$RNA@counts,     # Sparse count matrix (scRNA-seq)
+  lung_rna@meta.data$cells_short, # Meta data column for cell-type (scRNA-seq)
+  lung_rna@meta.data$orig.ident)  # Meta data column for sample id (scRNA-seq)
+
+epipot
+```
+
+
+### PROGENy enrichment analysis
+
+#### functions in utilities
+
+```{r progeny, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, out.width="50%"}
+
+outpath <- file.path(path, 'results')
+merged_sc <- 
+  readRDS(file.path(path,'merged_sc_adults.rds'))
+res <- readRDS(file.path(path, 'limma_res_adult.rds'))
+
+progeny_res <- run_progeny(merged_sc, res)
+ht_data <- plot_data(progeny_res)
+dotplot_ord <- make_dotplot(ht_data,'Adult Lungs')
+dotplot_ord <- dotplot_ord + theme(axis.text=element_text(size=12),
+                  axis.title=element_text(size=14,face="bold"))
+dotplot_ord
+# save_progeny_volcanos(progeny_res, outpath, 'neonatal_lungs')
+# progeny_intersection(progeny_res, file.path(outpath,'neonatal_lungs'))
+# dotplot_ord <- make_dotplot(ht_data,'Neonatal Lungs')
+
+```
+
+### HOMER motif analysis
+
+#### functions in utilities
+
+```{r homer_plot, eval=TRUE, echo=TRUE, message=FALSE, out.width="100%",out.height= "100%", warning=FALSE}
+# Lung case study
+lung_case_db <- homer_db(lung_case_path)
+lung_case_homer_motifs <- motif_dotplot(lung_case_db, 'Lung_GSE161383')
+lung_case_homer_motifs
+```
