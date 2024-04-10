@@ -11,7 +11,23 @@ Encoding: UTF-8
 LazyData: true
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    Seurat
 VignetteBuilder: knitr
 URL: https://github.com/csbg/epipot_package
 BugReports: https://github.com/csbg/epipot_package/issues
+Imports: 
+    ChIPseeker,
+    EnsDb.Hsapiens.v86,
+    ensembldb,
+    GenomicRanges,
+    limma,
+    Matrix,
+    org.Hs.eg.db,
+    purrr,
+    Repitools,
+    rlang,
+    tibble,
+    tidyr
+Depends: 
+    R (>= 4.1)

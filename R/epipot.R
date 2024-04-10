@@ -1,128 +1,162 @@
+#' Aggregate a count matrix.
+#'
+#' @param counts A sparse count matrix.
+#' @param cell_types A vector with cell types whose length is equal to the
+#'   number of columns in `counts`.
+#' @param samples A vector with sample names whose length is equal to the number
+#'   of columns in `counts`.
+#'
+#' @return a sparse matrix with the same number of rows as `counts` and with one
+#'   column for each cell type/sample combination. Note that combinations where
+#'   all values are zero are removed.
+#' @export
+#'
+#' @examples
+aggregate_count_matrix <- function(counts, cell_types, samples) {
+  cell_types <- clean_string(cell_types)
+  samples <- clean_string(samples)
+  colnames(counts) <- paste(cell_types, samples, sep = ":")
+  sapply(
+    unique(colnames(counts)),
+    \(col) Matrix::rowSums(counts[, colnames(counts) == col, drop = FALSE])
+  )
+}
 
 
-#function to merge scRNA-seq and scATAC-seq merged matrices
-create_merged_matrix <- function(atac_pseudobulk_annotated,
-                                 rna_seq_pseudobulk_seurat) {
-  colnames(rna_seq_pseudobulk_seurat) <-
-    paste0(colnames(rna_seq_pseudobulk_seurat),".RNA")
-  colnames(atac_pseudobulk_annotated) <-
-    paste0(colnames(atac_pseudobulk_annotated),".ATAC")
+#' Combine two count matrices.
+#'
+#' @param rna_mat An RNA-seq count matrix.
+#' @param atac_mat An ATAC-seq count matrix.
+#'
+#' @return A merged matrix that only contains rows whose names appear in both
+#'   original matrices.
+#' @export
+#'
+#' @examples
+merge_count_matrices <- function(rna_mat, atac_mat) {
+  colnames(rna_mat) <- paste0(colnames(rna_mat), ":RNA")
+  colnames(atac_mat) <- paste0(colnames(atac_mat), ":ATAC")
 
-  merged_sc <- merge(
-    rna_seq_pseudobulk_seurat,
-    atac_pseudobulk_annotated,
-    by = 0
+  common_genes <- intersect(
+    rownames(rna_mat),
+    rownames(atac_mat)
   )
 
-  merged_sc %>%
-    remove_rownames %>%
-    column_to_rownames("Row.names")
+  cbind(
+    rna_mat[common_genes, ],
+    atac_mat[common_genes, ]
+  )
 }
 
-create_design_matrix <- function(atac_seq_pseudobulk_annotated,
-                                 rna_seq_pseudobulk ){
-  atac_seq_pseudobulk_annotated <-
-    inject_underscores(atac_seq_pseudobulk_annotated)
-  rna_seq_pseudobulk <-
-    inject_underscores(rna_seq_pseudobulk)
 
-  design <- rbind(
-    data.frame(
-      x=names(atac_seq_pseudobulk_annotated),
-      row.names = paste0(names(atac_seq_pseudobulk_annotated), ".ATAC"),
-      cell = sub("_[^_]+$", "", colnames(atac_seq_pseudobulk_annotated)),#names(atac_seq_pseudobulk_annotated),
-      tech="ATAC"),
-    data.frame(
-      x=names(rna_seq_pseudobulk),
-      row.names = paste0(names(rna_seq_pseudobulk),".RNA"),
-      cell =  sub("_[^_]+$", "", colnames(rna_seq_pseudobulk)),#names(rna_seq_pseudobulk),
-      tech="RNA"
-    ) )
-  design$tech <- relevel(factor(design$tech), ref="RNA")
-  return(design)
+#' Create a model frame from the merged count matrix.
+#'
+#' @param mat A count matrix containing RNA- and ATAC-seq data.
+#'
+#' @return A data frame that can be passed to `model.matrix()`.
+#' @export
+#'
+#' @examples
+create_model_frame <- function(mat) {
+  tibble::tibble(col = colnames(mat)) |>
+    tidyr::separate_wider_delim(
+      col,
+      delim = ":",
+      names = c("cell", "sample", "tech"),
+      cols_remove = FALSE
+    ) |>
+    dplyr::mutate(tech = relevel(factor(tech), ref = "RNA")) |>
+    tibble::column_to_rownames("col")
 }
 
-# Function
-parse_limma_res <- function(limma_fit) {
+
+#' Obtain log-fold changes and p-values for all genes in all cell types.
+#'
+#' @param limma_fit A fit object returned by limma.
+#'
+#' @return A data frame containing, for all cell types (column "cell") and genes
+#'   ("gene"), log-fold changes ("logFC") and p-values ("P.Value", "adj.P.Val"),
+#'   as well as the remaining columns returned by `limma::topTable()`.
+#' @export
+#'
+#' @examples
+parse_limma_results <- function(limma_fit) {
   coefss <- grep(":techATAC", colnames(coef(limma_fit)), value = TRUE)
-  coefx <- coefss[1]
-  results <- data.table()
-  for (coefx in coefss) {
-    cell <- gsub("cell(.+)\\:tech.+", "\\1", coefx)
-    message(coefx)
-    results <-
-      rbind(
-        results,
-        data.table(limma::topTable(limma_fit, coef=coefx, number=Inf),
-                   keep.rownames=T,  cell = cell)) #cell_type = ctx,
-  }
-
-  results
+  purrr::map(
+    rlang::set_names(coefss),
+    \(c)
+      limma::topTable(limma_fit, coef = c, number = Inf) |>
+      tibble::as_tibble(rownames = "gene")
+  ) |>
+    purrr::list_rbind(names_to = "cell") |>
+    tidyr::separate_wider_regex(cell, c("cell", cell = ".+", "\\:tech.+"))
 }
 
-sanity_plot <- function(matrix = merged_matrix, design = design_mat,
-                        gene = gene_name, column_names = pattern,
-                        cells = cell_type, ncolumn = facet_cols){
-  #gene <- gene_name
-  x <- design
-  x$E <- as.matrix(matrix)[gene,]
-  x$gene <- as.matrix(matrix)[gene,]
-  x <- x %>% dplyr::filter(str_detect(x, column_names))
-  x$cell <- stringr::str_to_title(gsub("_", " ", x$cell))
-  gene_plot <-
-    ggplot(x, aes(x=tech, y=gene, fill = tech)) +
-    geom_boxplot(lwd=0.3 ,color="black", outlier.colour="firebrick",
-                 outlier.shape=8, outlier.size=0.1) + theme_rd()  +
-    scale_fill_manual(values = c("grey50","coral")) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    labs(title = cells, y = gene, x = '', fill= "") +
-    facet_wrap(.~cell, ncol = ncolumn)
-  return(gene_plot)
-}
 
-# Function
-epigenetic_potential <- function(
-    atac_count_matrix,
-    atac_cell_type_vector,
-    atac_sample_vector,
-    rna_count_matrix,
-    rna_cell_type_vector,
-    rna_sample_vector
-){
-  # Create list object
-  epipot <- list()
-  # Create aggregate matrix from count matrix              (base R)
-  rna_aggr_mat <- matrix_aggregate(
-    rna_count_matrix,
-    as.character(rna_cell_type_vector),
-    as.character(rna_sample_vector))
-  atac_aggr_mat <- matrix_aggregate(
-    atac_count_matrix,
-    as.character(atac_cell_type_vector),
-    as.character(atac_sample_vector))
-  epipot[["rna_pseudobulk"]] <- rna_aggr_mat
-  epipot[["atac_aggr_mat"]] <- atac_aggr_mat
-  # Z-score scaling of the aggregate matrices               (base R)
-  rna_zr <- data.frame(t(scale(t(rna_aggr_mat))) )
-  atac_zr <- data.frame(t(scale(t(atac_aggr_mat))) )
-  atac_zr <- atac_zr[grep("\\.\\d+$", row.names(atac_zr), invert = TRUE),]
-  # annotate peaks to genes for atac-seq                   (Signac, Repitools, ChIPseeker, EnsDb.Hsapiens.v86)
-  atac_zr_anno <- annotate_peaks_pseudobulk(atac_zr)
-  # Create merged matrix of scRNA-seq and scATAC-seq        (base R)
-  merged_mat <- create_merged_matrix(atac_zr_anno, rna_zr)
-  # Create metadata for model matrix                        (base R)
-  design_meta <-  create_design_matrix(atac_zr_anno, rna_zr)
-  epipot[["design"]] <- design_meta
-  # create model matrix
-  model <- model.matrix(~ 0 + cell / tech, data=design_meta)
-  # Arrange columns as per model matrix                     (base R)
-  merged_matrix <- merged_mat[, row.names(model)]
-  epipot[["merged_matrix"]] <- merged_matrix
-  # Create limma model                                      (limma)
-  fit <- lmFit(merged_matrix, model)
-  fit <- eBayes(fit)
-  # Parse limma model results                               (data.table)
-  res <- parse_limma_res(fit)
-  epipot[["results"]] <- res
-  return(epipot)
+#' Calculate the epigenetic potential.
+#'
+#' @param rna_counts A sparse scRNA-seq count matrix.
+#' @param rna_cell_types A vector with cell types whose length is equal to the
+#'   number of columns in `rna_counts`.
+#' @param rna_samples A vector with sample names whose length is equal to the
+#'   number of columns in `counts`.
+#' @param atac_counts A sparse scATAC-seq count matrix.
+#' @param atac_cell_types A vector with cell types whose length is equal to the
+#'   number of columns in `atac_counts`.
+#' @param atac_samples A vector with sample names whose length is equal to the
+#'   number of columns in `atac_counts`.
+#' @param verbose If `TRUE`, progress messages are printed.
+#'
+#' @return A data frame containing, for all cell types (column "cell") and genes
+#'   ("gene"), log-fold changes ("logFC") and p-values ("P.Value", "adj.P.Val"),
+#'   as well as the remaining columns returned by `limma::topTable()`.
+#' @export
+#'
+#' @examples
+epigenetic_potential <- function(rna_counts,
+                                 rna_cell_types,
+                                 rna_samples,
+                                 atac_counts,
+                                 atac_cell_types,
+                                 atac_samples,
+                                 verbose = TRUE) {
+  if (verbose)
+    msg <- message
+  else
+    msg <- invisible
+
+  msg("Aggregating count matrices …")
+  rna_mat_agg <- aggregate_count_matrix(
+    counts = rna_counts,
+    cell_types = rna_cell_types,
+    samples = rna_samples
+  )
+  atac_mat_agg <- aggregate_count_matrix(
+    counts = atac_counts,
+    cell_types = atac_cell_types,
+    samples = atac_samples
+  )
+
+  msg("Scaling count matrices …")
+  rna_mat_z <- scale_rows(rna_mat_agg)
+  atac_mat_z <- scale_rows(atac_mat_agg)
+
+  msg("Annotating peaks in ATAC-seq data …")
+  atac_mat_z_anno <- annotate_atac_peaks(atac_mat_z)
+  merged_mat <- merge_count_matrices(rna_mat_z, atac_mat_z_anno)
+
+  msg("Running linear model …")
+  sample_metadata <- create_model_frame(merged_mat)
+  model <- model.matrix(
+    ~ 0 + cell / tech,
+    data = sample_metadata
+  )
+  fit <-
+    merged_mat |>
+    lmFit(model) |>
+    eBayes()
+  res <- parse_limma_results(fit)
+
+  msg("… done!")
+  res
 }
