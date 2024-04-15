@@ -124,6 +124,7 @@ Parse limma results.
 ```{r}
 res <- parse_limma_results(fit)
 # saveRDS(res, "~/Desktop/epipot_res.rds")
+# saveRDS(merged_mat, "~/Desktop/epipot_merged.rds")
 ```
 
 After these steps, `res`  will contain the same data as if we had run the `epigenetic_potential()` function.
@@ -132,30 +133,35 @@ After these steps, `res`  will contain the same data as if we had run the `epige
 
 # PROGENy enrichment analysis
 
-## functions in utilities
+descriptive text
 
-```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, out.width="50%"}
-
-outpath <- file.path(path, 'results')
+```{r}
+# outpath <- file.path(path, 'results')
 merged_sc <-
-  readRDS(file.path(path,'merged_sc_adults.rds'))
-res <- readRDS(file.path(path, 'limma_res_adult.rds'))
+  readRDS('../data/merged_sc_adults.rds') |> 
+  as.matrix()
+res <-
+  readRDS('../data/limma_res_adult.rds') |> 
+  tibble::as_tibble() |>
+  dplyr::relocate(cell) |> 
+  dplyr::rename(gene = rn)
 
 progeny_res <- run_progeny(merged_sc, res)
-ht_data <- plot_data(progeny_res)
-dotplot_ord <- make_dotplot(ht_data,'Adult Lungs')
-dotplot_ord <- dotplot_ord + theme(axis.text=element_text(size=12),
-                  axis.title=element_text(size=14,face="bold"))
-dotplot_ord
-# save_progeny_volcanos(progeny_res, outpath, 'neonatal_lungs')
-# progeny_intersection(progeny_res, file.path(outpath,'neonatal_lungs'))
-# dotplot_ord <- make_dotplot(ht_data,'Neonatal Lungs')
+# saveRDS(progeny_res, "../data/progeny_res.rds")
 
+plot_progeny_heatmap(progeny_res$sample_acts)
+plot_progeny_cell_barplot(progeny_res$alveolar_type_1$contrast_acts)
+plot_progeny_pathway_dots(
+  progeny_res$alveolar_type_1$pathways,
+  "Androgen"
+)
+
+make_dotplot(progeny_res)
 ```
 
 # HOMER motif analysis
 
-## functions in utilities
+descriptive text
 
 ```{r homer_plot, eval=TRUE, echo=TRUE, message=FALSE, out.width="100%",out.height= "100%", warning=FALSE}
 # Lung case study

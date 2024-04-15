@@ -1,285 +1,183 @@
-# Run PROGENy using merged counts matrices and limma results
-run_progeny <- function(counts_df, limma_results) {
-  progeny_list <- list()
-  cell_list <- names(table(limma_results$cell))
-  counts <-
-    counts_df %>%
-    dplyr::mutate_if(~ any(is.na(.x)), ~ if_else(is.na(.x),0,.x)) %>%
-    as.matrix()
-  net <- get_progeny(organism = 'human', top = 500)
-  net$mor <- net$weight
-  sample_acts <- run_mlm(mat = counts, net = net, .source = 'source',
-                         .target = 'target', .mor = 'weight', minsize = 3)
+#' Run the PROGENy analysis.
+#'
+#' @param counts
+#' @param limma_results
+#'
+#' @return
+#' @export
+#'
+#' @examples
+run_progeny <- function(counts, limma_results) {
+  res <- list()
 
-  # Transform to wide matrix
-  sample_acts_mat <-
-    sample_acts %>%
-    pivot_wider(id_cols = 'condition', names_from = 'source',
-                values_from = 'score') %>%
-    column_to_rownames('condition') %>%
-    as.matrix()
+  message("Analyzing overall dataset")
+  counts[is.na(counts)] <- 0
+  net <- decoupleR::get_progeny(organism = 'human', top = 500)
+  sample_acts <- decoupleR::run_mlm(counts, net, .mor = "weight", minsize = 3)
+  res$sample_acts <- sample_acts
 
-  # Scale per feature
-  sample_acts_mat <- scale(sample_acts_mat)
-  # Choose color palette
-  palette_length = 100
-  my_color = colorRampPalette(c("Darkblue", "white","red"))(palette_length)
-  my_breaks <- c(seq(-3, 0, length.out = ceiling(palette_length/2) + 1),
-                 seq(0.05, 3, length.out = floor(palette_length/2)))
-  # Plot
-  heatmap <-
-    pheatmap::pheatmap(sample_acts_mat, border_color = NA,
-                       color = my_color, show_rownames = FALSE,
-                       breaks = my_breaks)
-  progeny_list$heatmap <- heatmap
-  non_empty <- c()
-
-  for (cell in cell_list) {
-    cells <-  cell #'arterial_endothelial' # cell 'alveolar_type_1'  'airway_smooth_muscle'
-    message(cells)
-    progeny_list[[cells]] <- list()
-    deg <- limma_results %>%
-      dplyr::filter(cell == cells & logFC > 0) %>%
-      dplyr::select(rn, t) %>%
-      dplyr::filter(!is.na(t)) %>%
-      column_to_rownames(var = "rn") %>%
-      as.matrix()
+  for (cell_type in unique(limma_results$cell)) {
+    deg <-
+      limma_results |>
+      dplyr::filter(cell == cell_type, logFC > 0, !is.na(t)) |>
+      dplyr::select(gene, t)
     if (nrow(deg) == 0) {
-      message("This data frame is empty")
-    } else if (length(intersect(rownames(deg), net$target)) < 20) {
-      message("intersection is less than 20")
+      message("Skipping ", cell_type, " (no differentially expressed genes)")
+    } else if (length(intersect(deg$gene, net$target)) < 20) {
+      message("Skipping ", cell_type, " (less than 20 genes in PROGENy database)")
     } else {
-      message("This data frame is not empty")
-      non_empty <- c(non_empty, cells)
-      progeny_list[[cells]]$deg <- deg
-      # Run mlm
-      contrast_acts <- run_mlm(mat = deg, net = net, .source = 'source',
-                               .target = 'target', .mor = 'weight', minsize = 5)
-      progeny_list[[cells]]$contrast_acts <- contrast_acts
-      # Plot
-      barplot <-
-        ggplot(contrast_acts, aes(x = reorder(source, score), y = score)) +
-        geom_bar(aes(fill = score), stat = "identity") +
-        scale_fill_gradient2(low = "darkblue", high = "indianred",
-                             mid = "whitesmoke", midpoint = 0) +
-        theme_minimal() +
-        theme(axis.title = element_text(face = "bold", size = 12),
-              axis.text.x =
-                element_text(angle = 45, hjust = 1, size = 10, face = "bold"),
-              axis.text.y = element_text(size = 10, face = "bold"),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank()) +
-        xlab("Pathways")
-      progeny_list[[cells]]$barplot <- barplot
-
-      pathways <- names(table(net$source))
-      progeny_list[[cells]]$pathways <- list()
-
-
-      for (ptw in pathways) {
-        pathway <- ptw # 'MAPK'
-        df <- net %>%
-          dplyr::filter(source == pathway) %>%
-          arrange(target) %>%
-          mutate(ID = target, color = "3") %>%
-          column_to_rownames('target')
-        inter <- sort(intersect(rownames(deg),rownames(df)))
-        df <- df[inter, ]
-        df['t_value'] <- deg[inter, ]
-        df <- df %>%
-          dplyr::filter(p_value < 0.05) %>%
-          mutate(color = if_else(weight > 0 & t_value > 0, '1', color)) %>%
-          mutate(color = if_else(weight > 0 & t_value < 0, '2', color)) %>%
-          mutate(color = if_else(weight < 0 & t_value > 0, '2', color)) %>%
-          mutate(color = if_else(weight < 0 & t_value < 0, '1', color))
-        progeny_list[[cells]]$pathways[[pathway]]$df <- df
-        weight_plot <-
-          ggplot(df, aes(x = weight, y = t_value, color = color)) + geom_point() +
-          scale_colour_manual(values = c("red","royalblue3","grey")) +
-          geom_label_repel(aes(label = ID)) +
-          theme_nb() +
-          theme(legend.position = "none",
-                panel.border = element_rect(color = "black", fill = NA, size = 0.1),
-                plot.margin = margin(0.01, 0.01, 0.01, 0.01, "cm")) +
-          geom_vline(xintercept = 0, linetype = 'dotted') +
-          geom_hline(yintercept = 0, linetype = 'dotted') +
-          ggtitle(pathway)
-        progeny_list[[cells]]$pathways[[pathway]]$plot <- as.ggplot(weight_plot)
-      }
+      message("Analyzing ", cell_type)
+      contrast_acts <-
+        deg |>
+        tibble::column_to_rownames("gene") |>
+        as.matrix() |>
+        decoupleR::run_mlm(net, .mor = "weight", minsize = 5)
+      pathways <-
+        net |>
+        dplyr::inner_join(deg, by = dplyr::join_by(target == gene)) |>
+        dplyr::filter(p_value < 0.05)
+      res[[cell_type]] <- list(
+        deg = deg,
+        contrast_acts = contrast_acts,
+        pathways = pathways
+      )
     }
   }
-  progeny_list$non_empty <- non_empty
-
-  progeny_list
-}
-
-# Save PROGENy volcano plots
-save_progeny_volcanos <- function(progeny_results, save_path, tissue){
-  path <- save_path # '/media/AGFORTELNY/people/rohit/projects/epigenetic_potential/GSE161383/plots'
-  non_empty <- progeny_results[['non_empty']]
-  for (cell in non_empty) {
-    print(cell)
-    plotlist1 <-
-      list(progeny_results[[cell]]$pathways$WNT$plot,
-           progeny_results[[cell]]$pathways$Hypoxia$plot,
-           progeny_results[[cell]]$pathways$PI3K$plot,
-           progeny_results[[cell]]$pathways$VEGF$plot,
-           progeny_results[[cell]]$pathways$Trail$plot,
-           progeny_results[[cell]]$pathways$TNFa$plot,
-           progeny_results[[cell]]$pathways$TGFb$plot,
-           progeny_results[[cell]]$pathways$EGFR$plot)
-    plotlist2 <-
-      list(progeny_results[[cell]]$pathways$MAPK$plot,
-           progeny_results[[cell]]$pathways$NFkB$plot,
-           progeny_results[[cell]]$pathways$p53$plot,
-           progeny_results[[cell]]$pathways$Androgen$plot,
-           progeny_results[[cell]]$pathways$Estrogen$plot,
-           progeny_results[[cell]]$pathways$`JAK-STAT`$plot)
-    filedir <- file.path(path, tissue, cell)
-    if (!dir.exists(filedir)){
-      dir.create(filedir, recursive = TRUE)
-    }else{
-      print("dir exists")
-    }
-    filename1 <- file.path(filedir, paste0(cell, '_plotlist1.pdf'))
-    title = stringr::str_to_title(gsub('_', ' ', cell))
-    filename2 <- file.path(filedir, paste0(cell, '_plotlist2.pdf'))
-    ggsave(plot = wrap_plots(plotlist1, ncol = 2) +
-             plot_annotation(title, caption = 'PROGENy results',
-                             theme=theme(plot.title=element_text(hjust=0.5))) ,
-           file=filename1, width = 210, height = 297, units = "mm")
-    ggsave(plot = wrap_plots(plotlist2, ncol = 2) ,
-           file=filename2, width = 210, height = 297, units = "mm")
-  }
-}
-# Filter cells with no DEGs and process
-plot_data <- function(progeny_results){
-  non_empty <- progeny_results[['non_empty']]
-  plotlist <- list()
-  for (cell in non_empty){
-    print(cell)
-    plotlist[[cell]] <-
-      progeny_results[[cell]]$contrast_acts |>
-      data.frame() |>
-      dplyr::mutate(cells = cell) |>
-      dplyr::select(source, cells, score, p_value)
-  }
-  return(plotlist)
-}
-# Make dotplots using output from plot_data function
-make_dotplot <- function(datalist, title){
-  merged_list <- do.call(rbind, datalist)
-  heat_mat_row <-
-    merged_list |>
-    #dplyr::mutate(score = ifelse(p_value < 0.05, score, 0)) |>
-    dplyr::select(-p_value) |>
-    pivot_wider(names_from = source, values_from = score) |>
-    data.frame()
-  row.names(heat_mat_row) <- heat_mat_row$cells
-  heat_mat_row <- heat_mat_row[,-1]
-  clust_row <- hclust(dist(heat_mat_row %>% as.matrix()))
-  ddgram_row <- as.dendrogram(clust_row)
-  ggtree_plot_row <- ggtree::ggtree(ddgram_row)
-  ggtree_plot_row
-
-  heat_mat_col <-
-    merged_list |>
-    dplyr::mutate(score = ifelse(p_value < 0.05, score, 0)) |>
-    dplyr::select(-p_value) |>
-    pivot_wider(names_from = source, values_from = score) |>
-    data.frame()
-  row.names(heat_mat_col) <- heat_mat_col$cells
-  heat_mat_col <- heat_mat_col[,-1]
-  clust_col <- hclust(dist(heat_mat_col %>% as.matrix()))
-  ddgram_col <- as.dendrogram(clust_col)
-  ggtree_plot_col <- ggtree::ggtree(ddgram_col)
-  ggtree_plot_col
-
-  dotplot <-
-    merged_list %>%
-    #dplyr::mutate(score = ifelse(p_value < 0.05, score, 0)) |>
-    #mutate(cells = factor(cells, levels = clust_row$labels[clust_row$order]) #,
-    #source = factor(source, levels = clust_col$labels[clust_col$order]) ) %>%
-    ggplot(aes(y=stringr::str_to_title(gsub('_', ' ', cells)),
-               x = source, color = score, size = -log10(p_value))) +
-    geom_point() +
-    geom_point(data=merged_list %>% dplyr::filter(p_value < 0.05),
-               pch=21, size= 8, stroke = 1.5, colour="firebrick1") +
-    theme_nb() +
-    theme(axis.line  = element_blank()) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    labs(title = title, y = '', x = 'Pathway') +
-    theme(axis.ticks = element_blank()) +
-    scale_color_gradientn(colours = viridis::viridis(20) ,#viridis::turbo(5),# viridis::viridis(20), #RColorBrewer::brewer.pal(11,"RdBu")
-                          limits = c(-2,2),
-                          oob = scales::squish,
-                          name = 'PROGENy score')
-  return(dotplot)
-
-}
-# Get gene intersection between progeny set and limma res
-progeny_intersection <- function(progeny_res, save_path) {
-  require(progeny)
-  net <- get_progeny(organism = 'human', top = 500)
-  cells <- progeny_res[['non_empty']]
-  tissue_list <- list()
-  for (cell in cells){
-    cell_list <- list()
-    degs <- rownames(progeny_res[[cell]]$deg)
-    pathways <- names(progeny_res[[cell]]$pathways)
-    for (pathway in pathways){
-      nets <- net[net$source == pathway,]$target
-      inter <- intersect(degs, nets)
-      cell_list[[pathway]] <- sort(inter)
-    }
-    tissue_list[[cell]] <- cell_list
-  }
-  for (name in names(tissue_list)){
-    print(name)
-    filedir <- file.path(save_path, name)
-    if (!dir.exists(filedir)){
-      dir.create(filedir, recursive = TRUE)
-    }else{
-      print(paste(filedir,"exists"))
-    }
-    db <- plyr::ldply(tissue_list[[name]], rbind) %>%
-      remove_rownames %>%
-      column_to_rownames(var=".id")
-    filename <- file.path(filedir, paste0(name, '_gene_intersection.csv'))
-    fwrite(db, filename)
-  }
-}
-theme_rd <- function(grid = TRUE,
-                     rotate = FALSE,
-                     ...){
-  res <-
-    theme_bw(...) +
-    theme(
-      line = element_line(size = BASE_LINE_SIZE),
-      axis.text = element_text(color = "black", size = BASE_TEXT_SIZE_PT),
-      axis.title = element_text(color = "black", size = BASE_TEXT_SIZE_PT),
-      legend.background = element_blank(),
-      legend.text = element_text(color = "black", size = BASE_TEXT_SIZE_PT),
-      legend.title = element_text(size = BASE_TEXT_SIZE_PT),
-      panel.border = element_rect(size = BASE_LINE_SIZE /2),
-      plot.margin = unit(c(1, 1, 1, 1), "mm"),
-      strip.background = element_blank(),
-      strip.text = element_text(
-        color = "black",
-        size = BASE_TEXT_SIZE_PT
-      ),
-      strip.text.x = element_text(margin = margin(b = 1, unit = "mm")),
-      strip.text.y = element_text(margin = margin(l = 1, unit = "mm"))
-    )
-
-  if (!grid)
-    res <-
-      res +
-      theme(panel.grid = element_blank())
-  if (rotate)
-    res <-
-      res +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
   res
+}
+
+
+#' Plot a PROGENy heatmap.
+#'
+#' @param x
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_progeny_heatmap <- function(x) {
+  x |>
+    tidyr::pivot_wider(
+      id_cols = 'condition',
+      names_from = 'source',
+      values_from = 'score'
+    ) |>
+    tibble::column_to_rownames('condition') |>
+    as.matrix() |>
+    scale() |>
+    ComplexHeatmap::Heatmap(
+      col = circlize::colorRamp2(
+        c(-3, 0, 3),
+        c("darkblue", "white", "red")
+      ),
+      show_row_names = FALSE,
+      heatmap_legend_param = list(
+        title = "score",
+        at = c(-3, 0, 3)
+      )
+    )
+}
+
+#' Plot PROGENy pathway scores for a single cell type.
+#'
+#' @param df
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_progeny_cell_barplot <- function(df) {
+  ggplot2::ggplot(
+    df,
+    ggplot2::aes(
+      reorder(source, score),
+      score,
+      fill = score)
+    ) +
+    ggplot2::geom_col() +
+    ggplot2::scale_fill_gradient2(
+      low = "darkblue",
+      mid = "whitesmoke",
+      high = "indianred"
+    ) +
+    ggplot2::xlab("pathways") +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      axis.title = ggplot2::element_text(face = "bold", size = 12),
+      axis.text.x = ggplot2::element_text(
+        angle = 45, hjust = 1, size = 10, face = "bold"
+      ),
+      axis.text.y = ggplot2::element_text(size = 10, face = "bold"),
+      panel.grid = ggplot2::element_blank()
+    )
+}
+
+
+#' Plot dots for pathways.
+#'
+#' @param x
+#' @param pathway
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_progeny_pathway_dots <- function(x, pathway) {
+  x |>
+    dplyr::filter(source == {{pathway}}) |>
+    dplyr::mutate(
+      color = dplyr::case_when(
+        weight > 0 & t > 0 ~ '1',
+        weight < 0 & t < 0 ~ '1',
+        .default = '2'
+      )
+    ) |>
+    ggplot2::ggplot(ggplot2::aes(weight, t, color = color)) +
+    ggplot2::geom_hline(yintercept = 0, linetype = 'dotted') +
+    ggplot2::geom_vline(xintercept = 0, linetype = 'dotted') +
+    ggplot2::geom_point() +
+    ggrepel::geom_label_repel(ggplot2::aes(label = target)) +
+    ggplot2::scale_colour_manual(values = c("red","royalblue3","grey")) +
+    ggplot2::ggtitle(pathway) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(legend.position = "none")
+}
+
+
+#' Dotplot of PROGENy results.
+#'
+#' @param x
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_dotplot <- function(x) {
+  plot_data <-
+    progeny_res[2:length(progeny_res)] |>
+    purrr::map(\(x) x$contrast_acts) |>
+    purrr::list_rbind(names_to = "cell_type")
+
+  ggplot2::ggplot(plot_data, ggplot2::aes(source, cell_type)) +
+    ggplot2::geom_point(ggplot2::aes(color = score, size = -log10(p_value))) +
+    ggplot2::geom_point(
+      data = plot_data |> dplyr::filter(p_value < 0.05),
+      shape = 21,
+      size = 8,
+      stroke = 1.5,
+      color = "firebrick1"
+    ) +
+    ggplot2::xlab("Pathway") +
+    ggplot2::ylab("Cell type") +
+    ggplot2::scale_color_viridis_c(
+      limits = c(-2, 2),
+      oob = scales::squish,
+      name = 'PROGENy score'
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1),
+      axis.ticks = ggplot2::element_blank()
+    )
 }
