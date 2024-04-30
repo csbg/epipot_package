@@ -1,12 +1,11 @@
 #' Run the PROGENy analysis.
 #'
-#' @param counts
-#' @param limma_results
+#' @param counts A merged count matrix as returned by `merge_count_matrices()`.
+#' @param limma_results Results of the epigenetic potential analysis as returned
+#'   by `parse_limma_results()`.
 #'
-#' @return
+#' @return A list of class `progeny_results`.
 #' @export
-#'
-#' @examples
 run_progeny <- function(counts, limma_results) {
   res <- list()
 
@@ -44,18 +43,17 @@ run_progeny <- function(counts, limma_results) {
     }
   }
 
+  class(res) <- "progeny_results"
   res
 }
 
 
 #' Plot a PROGENy heatmap.
 #'
-#' @param x
+#' @param x A list as returned by `run_progeny()`.
 #'
-#' @return
+#' @return A `ComplexHeatmap` object.
 #' @export
-#'
-#' @examples
 plot_progeny_heatmap <- function(x) {
   x |>
     tidyr::pivot_wider(
@@ -81,12 +79,10 @@ plot_progeny_heatmap <- function(x) {
 
 #' Plot PROGENy pathway scores for a single cell type.
 #'
-#' @param df
+#' @param df A list as returned by `run_progeny()`.
 #'
-#' @return
+#' @return A `ggplot2` object.
 #' @export
-#'
-#' @examples
 plot_progeny_cell_barplot <- function(df) {
   ggplot2::ggplot(
     df,
@@ -116,13 +112,11 @@ plot_progeny_cell_barplot <- function(df) {
 
 #' Plot dots for pathways.
 #'
-#' @param x
-#' @param pathway
+#' @param x A list as returned by `run_progeny()`.
+#' @param pathway The pathway to plot.
 #'
-#' @return
+#' @return A `ggplot2` object.
 #' @export
-#'
-#' @examples
 plot_progeny_pathway_dots <- function(x, pathway) {
   x |>
     dplyr::filter(source == {{pathway}}) |>
@@ -147,12 +141,10 @@ plot_progeny_pathway_dots <- function(x, pathway) {
 
 #' Dotplot of PROGENy results.
 #'
-#' @param x
+#' @param x A list as returned by `run_progeny()`.
 #'
-#' @return
+#' @return A `ggplot2` object.
 #' @export
-#'
-#' @examples
 make_dotplot <- function(x) {
   plot_data <-
     progeny_res[2:length(progeny_res)] |>

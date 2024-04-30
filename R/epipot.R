@@ -10,8 +10,6 @@
 #'   column for each cell type/sample combination. Note that combinations where
 #'   all values are zero are removed.
 #' @export
-#'
-#' @examples
 aggregate_count_matrix <- function(counts, cell_types, samples) {
   cell_types <- clean_string(cell_types)
   samples <- clean_string(samples)
@@ -31,8 +29,6 @@ aggregate_count_matrix <- function(counts, cell_types, samples) {
 #' @return A merged matrix that only contains rows whose names appear in both
 #'   original matrices.
 #' @export
-#'
-#' @examples
 merge_count_matrices <- function(rna_mat, atac_mat) {
   colnames(rna_mat) <- paste0(colnames(rna_mat), ":RNA")
   colnames(atac_mat) <- paste0(colnames(atac_mat), ":ATAC")
@@ -55,8 +51,6 @@ merge_count_matrices <- function(rna_mat, atac_mat) {
 #'
 #' @return A data frame that can be passed to `model.matrix()`.
 #' @export
-#'
-#' @examples
 create_model_frame <- function(mat) {
   tibble::tibble(col = colnames(mat)) |>
     tidyr::separate_wider_delim(
@@ -78,8 +72,6 @@ create_model_frame <- function(mat) {
 #'   ("gene"), log-fold changes ("logFC") and p-values ("P.Value", "adj.P.Val"),
 #'   as well as the remaining columns returned by `limma::topTable()`.
 #' @export
-#'
-#' @examples
 parse_limma_results <- function(limma_fit) {
   coefss <- grep(":techATAC", colnames(coef(limma_fit)), value = TRUE)
   purrr::map(
@@ -111,8 +103,6 @@ parse_limma_results <- function(limma_fit) {
 #'   ("gene"), log-fold changes ("logFC") and p-values ("P.Value", "adj.P.Val"),
 #'   as well as the remaining columns returned by `limma::topTable()`.
 #' @export
-#'
-#' @examples
 epigenetic_potential <- function(rna_counts,
                                  rna_cell_types,
                                  rna_samples,

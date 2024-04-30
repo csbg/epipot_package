@@ -2,7 +2,9 @@
 #'
 #' @param peaks A character vector with peaks given as "chromosome-start-end".
 #'
-#' @return A data frame with annotated peaks.
+#' @return A data frame with annonated peaks, represented as columns "peak" and
+#'   "gene". Peaks from the input for which no annotation could be found are
+#'   excluded.
 run_ChIPseeker <- function(peaks) {
   # select database for ChIPseeker
   edb <- EnsDb.Hsapiens.v86::EnsDb.Hsapiens.v86
@@ -28,7 +30,9 @@ run_ChIPseeker <- function(peaks) {
   )
 
   # convert ChIPseeker results to data frame
-  Repitools::annoGR2DF(peaks_annotated@anno) |>
+  peaks_df <-
+    peaks_annotated@anno |>
+    Repitools::annoGR2DF() |>
     tibble::as_tibble() |>
     tidyr::unite(
       chr,
@@ -38,6 +42,15 @@ run_ChIPseeker <- function(peaks) {
       sep = "-",
       remove = FALSE
     )
+
+  # for each genomic range, reduce annotations to a single gene
+  # by selecting the one with the smallest distance to TSS
+  peaks_df |>
+    dplyr::filter(!is.na(SYMBOL)) |>
+    dplyr::arrange(SYMBOL, abs(distanceToTSS)) |>
+    dplyr::distinct(SYMBOL, .keep_all = TRUE) |>
+    dplyr::select(peak, gene = SYMBOL) |>
+    dplyr::arrange(peak)
 }
 
 #' Annotate an ATAC-seq count matrix with gene names.
@@ -47,28 +60,16 @@ run_ChIPseeker <- function(peaks) {
 #' @return An ATAC-seq whose rownames are gene names. Rows for which no
 #'   annotation could be found are removed.
 #' @export
-#'
-#' @examples
 annotate_atac_peaks <- function(mat) {
   # get ChIPseeker annotations from genomic ranges stored in rownames
-  peak_annotations <-
+  annotated_peaks <-
     rownames(mat) |>
     run_ChIPseeker()
-
-  # for each genomic range, reduce annotations to a single gene
-  # by selecting the one with the smallest distance to TSS
-  annotated_peaks <-
-    peak_annotations |>
-    dplyr::filter(!is.na(SYMBOL)) |>
-    dplyr::arrange(SYMBOL, abs(distanceToTSS)) |>
-    dplyr::distinct(SYMBOL, .keep_all = TRUE) |>
-    dplyr::select(peak, SYMBOL) |>
-    dplyr::arrange(peak)
 
   # filter count matrix so it only contains rows
   # for which an annotation was found,
   # and replace rownames with these genes
   res <- mat[annotated_peaks$peak, ]
-  rownames(res) <- annotated_peaks$SYMBOL
+  rownames(res) <- annotated_peaks$gene
   res
 }

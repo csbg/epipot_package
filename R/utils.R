@@ -14,10 +14,11 @@ clean_string <- function(s) {
 #'
 #' @param m A numeric matrix
 #'
-#' @return A matrix whose rows have been scaled
+#' @return A matrix whose rows have been scaled.
 #' @export
 #'
 #' @examples
+#' scale_rows(diag(4))
 scale_rows <- function(m) {
   t(scale(t(m)))
 }
