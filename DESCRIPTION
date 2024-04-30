@@ -1,11 +1,26 @@
 Package: epiPot
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Analyze the Epigenetic Potential of Cells in Single-Cell datasets
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Authors@R:
+    c(person(given = "Rohit",
+             family = "Dnyansagar",
+             role = "aut",
+             comment = c(ORCID = "0000-0002-2699-0087")),
+      person(given = "Wolfgang",
+             family = "Esser-Skala",
+             email = "Wolfgang.Esser-Skala@plus.ac.at",
+             role = "cre",
+             comment = c(ORCID = "0000-0002-7350-4045")),
+      person(given = "Nikolaus",
+             family = "Fortelny",
+             role = "aut",
+             comment = c(ORCID = "0000-0003-4025-9968")),
+      person("University of Salzburg",
+             role = c("cph", "fnd"))
+    )
+Maintainer: Wolfgang Esser-Skala <wolfgang.esser-skala@plus.ac.at>
+Description: TBD
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -26,8 +41,10 @@ Imports:
     ggrepel,
     limma,
     Matrix,
+    OmnipathR,
     org.Hs.eg.db,
     purrr,
+    readr,
     Repitools,
     rlang,
     tibble,
