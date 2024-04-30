@@ -19,8 +19,7 @@ In this vignette we will go through the process of identifying cell-wise epigene
 ```{r message = FALSE}
 library(Seurat)
 library(limma)
-# library(epiPot)
-# lung_case_path <- file.path(path, 'results','motif')
+library(epiPot)
 ```
 
 
@@ -32,8 +31,8 @@ In this vignette we assume that the user has single-cell datasets with cell-type
 # TODO this data will not be provided with the package,
 # but has to be downloaded, e.g., from Zenodo
 # maybe usethis::use_course() ?
-rna_data <- readRDS('../data/GSE161382_rna.rds')
-atac_data <- readRDS('../data/GSE161381_atac.rds')
+rna_data <- readRDS('/home/wolfgang/Plus/Projects/epipot_data/GSE161382_rna.rds')
+atac_data <- readRDS('/home/wolfgang/Plus/Projects/epipot_data/GSE161381_atac.rds')
 ```
 
 
@@ -123,8 +122,9 @@ Parse limma results.
 
 ```{r}
 res <- parse_limma_results(fit)
-# saveRDS(res, "~/Desktop/epipot_res.rds")
-# saveRDS(merged_mat, "~/Desktop/epipot_merged.rds")
+# saveRDS(atac_mat_agg, "../data/epipot_atac_mat_agg.rds")
+# saveRDS(merged_mat, "../data/epipot_merged.rds")
+# saveRDS(res, "../data/epipot_res.rds")
 ```
 
 After these steps, `res`  will contain the same data as if we had run the `epigenetic_potential()` function.
@@ -133,20 +133,19 @@ After these steps, `res`  will contain the same data as if we had run the `epige
 
 # PROGENy enrichment analysis
 
-descriptive text
+TBD
 
 ```{r}
-# outpath <- file.path(path, 'results')
-merged_sc <-
-  readRDS('../data/merged_sc_adults.rds') |> 
-  as.matrix()
-res <-
-  readRDS('../data/limma_res_adult.rds') |> 
-  tibble::as_tibble() |>
-  dplyr::relocate(cell) |> 
-  dplyr::rename(gene = rn)
+# merged_mat <-
+#   readRDS('../data/merged_sc_adults.rds') |> 
+#   as.matrix()
+# res <-
+#   readRDS('../data/limma_res_adult.rds') |> 
+#   tibble::as_tibble() |>
+#   dplyr::relocate(cell) |> 
+#   dplyr::rename(gene = rn)
 
-progeny_res <- run_progeny(merged_sc, res)
+progeny_res <- run_progeny(merged_mat, res)
 # saveRDS(progeny_res, "../data/progeny_res.rds")
 
 plot_progeny_heatmap(progeny_res$sample_acts)
@@ -159,13 +158,31 @@ plot_progeny_pathway_dots(
 make_dotplot(progeny_res)
 ```
 
+
 # HOMER motif analysis
 
-descriptive text
+For the HOMER analysis, first create the necessary input files:
 
-```{r homer_plot, eval=TRUE, echo=TRUE, message=FALSE, out.width="100%",out.height= "100%", warning=FALSE}
-# Lung case study
-lung_case_db <- homer_db(lung_case_path)
-lung_case_homer_motifs <- motif_dotplot(lung_case_db, 'Lung_GSE161383')
-lung_case_homer_motifs
+```{r}
+# atac_mat_agg <- readRDS("../data/epipot_atac_mat_agg.rds")
+# res <- readRDS("../data/epipot_res.rds")
+# create_homer_data(atac_mat_agg, res)
+```
+
+Run HOMER.
+
+```{bash}
+# for file in *.bed; do
+#   folder=$(basename "$file" .bed)
+#   mkdir -p $folder
+#   findMotifsGenome.pl $file hg38 $folder -size 200 -mask
+# done
+```
+
+Load results and draw plots.
+
+```{r}
+# lung_case_db <- homer_db(lung_case_path)
+# lung_case_homer_motifs <- motif_dotplot(lung_case_db, 'Lung_GSE161383')
+# lung_case_homer_motifs
 ```
