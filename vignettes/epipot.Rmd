@@ -1,5 +1,5 @@
 ---
-title: "epipot"
+title: "The epipot package"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{epipot}
@@ -31,8 +31,9 @@ In this vignette we assume that the user has single-cell datasets with cell-type
 # TODO this data will not be provided with the package,
 # but has to be downloaded, e.g., from Zenodo
 # maybe usethis::use_course() ?
-rna_data <- readRDS('/home/wolfgang/Plus/Projects/epipot_data/GSE161382_rna.rds')
-atac_data <- readRDS('/home/wolfgang/Plus/Projects/epipot_data/GSE161381_atac.rds')
+DATA_PATH <- "/home/wolfgang/Plus/Projects/epipot_data"
+rna_data <- readRDS(file.path(DATA_PATH, 'GSE161382_rna.rds'))
+atac_data <- readRDS(file.path(DATA_PATH, 'GSE161381_atac.rds'))
 ```
 
 
@@ -122,9 +123,9 @@ Parse limma results.
 
 ```{r}
 res <- parse_limma_results(fit)
-# saveRDS(atac_mat_agg, "../data/epipot_atac_mat_agg.rds")
-# saveRDS(merged_mat, "../data/epipot_merged.rds")
-# saveRDS(res, "../data/epipot_res.rds")
+# saveRDS(atac_mat_agg, file.path(DATA_PATH, "epipot_atac_mat_agg.rds"))
+# saveRDS(merged_mat, file.path(DATA_PATH, "epipot_merged.rds"))
+# saveRDS(res, file.path(DATA_PATH, "epipot_res.rds"))
 ```
 
 After these steps, `res`  will contain the same data as if we had run the `epigenetic_potential()` function.
@@ -137,16 +138,16 @@ TBD
 
 ```{r}
 # merged_mat <-
-#   readRDS('../data/merged_sc_adults.rds') |> 
+#   readRDS(file.path(DATA_PATH, 'merged_sc_adults.rds')) |> 
 #   as.matrix()
 # res <-
-#   readRDS('../data/limma_res_adult.rds') |> 
+#   readRDS(file.path(DATA_PATH, 'limma_res_adult.rds')) |> 
 #   tibble::as_tibble() |>
 #   dplyr::relocate(cell) |> 
 #   dplyr::rename(gene = rn)
 
 progeny_res <- run_progeny(merged_mat, res)
-# saveRDS(progeny_res, "../data/progeny_res.rds")
+# saveRDS(progeny_res, file.path(DATA_PATH, "progeny_res.rds"))
 
 plot_progeny_heatmap(progeny_res$sample_acts)
 plot_progeny_cell_barplot(progeny_res$alveolar_type_1$contrast_acts)
@@ -164,8 +165,8 @@ make_dotplot(progeny_res)
 For the HOMER analysis, first create the necessary input files:
 
 ```{r}
-# atac_mat_agg <- readRDS("../data/epipot_atac_mat_agg.rds")
-# res <- readRDS("../data/epipot_res.rds")
+# atac_mat_agg <- readRDS(file.path(DATA_PATH, "epipot_atac_mat_agg.rds"))
+# res <- readRDS(file.path(DATA_PATH, "epipot_res.rds"))
 # create_homer_data(atac_mat_agg, res)
 ```
 
