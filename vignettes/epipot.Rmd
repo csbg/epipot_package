@@ -170,20 +170,9 @@ For the HOMER analysis, first create the necessary input files:
 # create_homer_data(atac_mat_agg, res)
 ```
 
-Run HOMER.
-
-```{bash}
-# for file in *.bed; do
-#   folder=$(basename "$file" .bed)
-#   mkdir -p $folder
-#   findMotifsGenome.pl $file hg38 $folder -size 200 -mask
-# done
-```
-
-Load results and draw plots.
+Run HOMER by using the script `run_homer.sh` provided in the folder. Load results and draw plots.
 
 ```{r}
-# lung_case_db <- homer_db(lung_case_path)
-# lung_case_homer_motifs <- motif_dotplot(lung_case_db, 'Lung_GSE161383')
-# lung_case_homer_motifs
+motifs <- read_homer_results(file.path(DATA_PATH, "homer_results"))
+plot_motifs(motifs)
 ```
