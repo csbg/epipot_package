@@ -32,7 +32,7 @@ run_ChIPseeker <- function(peaks) {
   # convert ChIPseeker results to data frame
   peaks_df <-
     peaks_annotated@anno |>
-    Repitools::annoGR2DF() |>
+    granges_to_dataframe() |>
     tibble::as_tibble() |>
     tidyr::unite(
       chr,

@@ -48,7 +48,6 @@ Imports:
     org.Hs.eg.db,
     purrr,
     readr,
-    Repitools,
     rlang,
     tibble,
     tidyr

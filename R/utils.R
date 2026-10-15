@@ -22,3 +22,24 @@ clean_string <- function(s) {
 scale_rows <- function(m) {
   t(scale(t(m)))
 }
+
+
+
+
+#' Convert an annotated GRanges object to a data frame.
+#'
+#' This functions derives from `annoGR2DF()` in the Repitools package.
+#'
+#' @param gr A Granges object
+#'
+#' @returns A data frame describing genomic ranges.
+#' @export
+#'
+#' @examples
+granges_to_dataframe <- function(gr) {
+  df <- as.data.frame(gr)
+  colnames(df)[1] <- "chr"
+  if ('*' %in% df$strand)
+    df <- df[, -match("strand", colnames(df))]
+  df
+}
