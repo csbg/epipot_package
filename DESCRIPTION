@@ -38,24 +38,17 @@ URL: https://github.com/csbg/epipot_package
 BugReports: https://github.com/csbg/epipot_package/issues
 Imports: 
     ChIPseeker,
-    ComplexHeatmap,
-    decoupleR,
     dplyr,
     EnsDb.Hsapiens.v86,
     ensembldb,
-    forcats,
     GenomicRanges,
-    ggrepel,
-    khroma,
     limma,
     Matrix,
-    OmnipathR,
     org.Hs.eg.db,
     purrr,
-    readr,
     rlang,
     tibble,
     tidyr
 Depends: 
     R (>= 4.1)
-RoxygenNote: 7.3.1
+Config/roxygen2/version: 8.1.1

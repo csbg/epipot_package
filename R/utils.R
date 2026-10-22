@@ -24,8 +24,6 @@ scale_rows <- function(m) {
 }
 
 
-
-
 #' Convert an annotated GRanges object to a data frame.
 #'
 #' This functions derives from `annoGR2DF()` in the Repitools package.
@@ -34,8 +32,6 @@ scale_rows <- function(m) {
 #'
 #' @returns A data frame describing genomic ranges.
 #' @export
-#'
-#' @examples
 granges_to_dataframe <- function(gr) {
   df <- as.data.frame(gr)
   colnames(df)[1] <- "chr"
