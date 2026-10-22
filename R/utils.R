@@ -39,3 +39,8 @@ granges_to_dataframe <- function(gr) {
     df <- df[, -match("strand", colnames(df))]
   df
 }
+
+
+ignore_unused_imports <- function() {
+  org.Hs.eg.db::org.Hs.egALIAS2EG
+}

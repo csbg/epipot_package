@@ -19,7 +19,6 @@ In this vignette we will go through the process of identifying cell-wise epigene
 ```{r message = FALSE}
 library(Seurat)
 library(limma)
-library(ggplot2)
 library(dplyr)
 library(epiPot)
 ```
@@ -128,8 +127,14 @@ After these steps, `res`  will contain the same data as if we had run the `epige
 Finally, results are shown as a volcano plot.
 
 ```{r}
-res |> 
-  filter(!is.na(logFC)) |> 
-  ggplot(aes(logFC, -log10(adj.P.Val))) +
-  geom_point(aes(color = cell))
+res_filtered <- 
+  res |> 
+  filter(!is.na(logFC))
+
+plot(
+  res_filtered$logFC, 
+  -log10(res_filtered$adj.P.Val), 
+  pch = 19, 
+  col = factor(res_filtered$cell)
+)
 ```

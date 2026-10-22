@@ -51,6 +51,7 @@ merge_count_matrices <- function(rna_mat, atac_mat) {
 #'
 #' @return A data frame that can be passed to `model.matrix()`.
 #' @export
+#' @importFrom rlang .data
 create_model_frame <- function(mat) {
   tibble::tibble(col = colnames(mat)) |>
     tidyr::separate_wider_delim(
@@ -59,7 +60,7 @@ create_model_frame <- function(mat) {
       names = c("cell", "sample", "tech"),
       cols_remove = FALSE
     ) |>
-    dplyr::mutate(tech = relevel(factor(tech), ref = "RNA")) |>
+    dplyr::mutate(tech = stats::relevel(factor(.data$tech), ref = "RNA")) |>
     tibble::column_to_rownames("col")
 }
 
@@ -72,8 +73,9 @@ create_model_frame <- function(mat) {
 #'   ("gene"), log-fold changes ("logFC") and p-values ("P.Value", "adj.P.Val"),
 #'   as well as the remaining columns returned by `limma::topTable()`.
 #' @export
+#' @importFrom rlang .data
 parse_limma_results <- function(limma_fit) {
-  coefss <- grep(":techATAC", colnames(coef(limma_fit)), value = TRUE)
+  coefss <- grep(":techATAC", colnames(stats::coef(limma_fit)), value = TRUE)
   purrr::map(
     rlang::set_names(coefss),
     \(c)
@@ -81,7 +83,7 @@ parse_limma_results <- function(limma_fit) {
       tibble::as_tibble(rownames = "gene")
   ) |>
     purrr::list_rbind(names_to = "cell") |>
-    tidyr::separate_wider_regex(cell, c("cell", cell = ".+", "\\:tech.+"))
+    tidyr::separate_wider_regex(.data$cell, c("cell", cell = ".+", "\\:tech.+"))
 }
 
 
@@ -115,7 +117,7 @@ epigenetic_potential <- function(rna_counts,
   else
     msg <- invisible
 
-  msg("Aggregating count matrices …")
+  msg("Aggregating count matrices ...")
   rna_mat_agg <- aggregate_count_matrix(
     counts = rna_counts,
     cell_types = rna_cell_types,
@@ -127,26 +129,26 @@ epigenetic_potential <- function(rna_counts,
     samples = atac_samples
   )
 
-  msg("Scaling count matrices …")
+  msg("Scaling count matrices ...")
   rna_mat_z <- scale_rows(rna_mat_agg)
   atac_mat_z <- scale_rows(atac_mat_agg)
 
-  msg("Annotating peaks in ATAC-seq data …")
+  msg("Annotating peaks in ATAC-seq data ...")
   atac_mat_z_anno <- annotate_atac_peaks(atac_mat_z)
   merged_mat <- merge_count_matrices(rna_mat_z, atac_mat_z_anno)
 
-  msg("Running linear model …")
+  msg("Running linear model ...")
   sample_metadata <- create_model_frame(merged_mat)
-  model <- model.matrix(
+  model <- stats::model.matrix(
     ~ 0 + cell / tech,
     data = sample_metadata
   )
   fit <-
     merged_mat |>
-    lmFit(model) |>
-    eBayes()
+    limma::lmFit(model) |>
+    limma::eBayes()
   res <- parse_limma_results(fit)
 
-  msg("… done!")
+  msg("... done!")
   res
 }

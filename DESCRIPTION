@@ -1,34 +1,38 @@
 Package: epiPot
 Type: Package
 Title: Analyze the Epigenetic Potential of Cells in Single-Cell datasets
-Version: 0.1.0
+Version: 0.0.0.9000
 Authors@R:
-    c(person(given = "Rohit",
-             family = "Dnyansagar",
-             role = "aut",
-             comment = c(ORCID = "0000-0002-2699-0087")),
-      person(given = "Wolfgang",
+    c(person(given = "Wolfgang",
              family = "Esser-Skala",
              email = "Wolfgang.Esser-Skala@plus.ac.at",
              role = "cre",
              comment = c(ORCID = "0000-0002-7350-4045")),
+      person(given = "Rohit",
+             family = "Dnyansagar",
+             role = "aut",
+             comment = c(ORCID = "0000-0002-2699-0087")),
       person(given = "Jure",
              family = "Krasić",
              email = "jure.krasix@mef.hr",
-             role = "cre",
+             role = "ctb",
              comment = c(ORCID = "0000-0002-8991-3927")),
       person(given = "Nikolaus",
              family = "Fortelny",
-             role = "aut",
+             role = "ctb",
              comment = c(ORCID = "0000-0003-4025-9968")),
       person("University of Salzburg",
              role = c("cph", "fnd"))
     )
 Maintainer: Wolfgang Esser-Skala <wolfgang.esser-skala@plus.ac.at>
-Description: TBD
+Description: Genes may be epigenetically primed for activation. 
+    This package identifies such genes in a single-cell RNA- and ATAC-seq 
+    dataset by comparing chromatin accessibility of each gene promoter 
+    to the expression level of the corresponding gene.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression: xz
 Suggests: 
     knitr,
     rmarkdown,

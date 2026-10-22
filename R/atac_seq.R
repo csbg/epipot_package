@@ -5,6 +5,7 @@
 #' @return A data frame with annonated peaks, represented as columns "peak" and
 #'   "gene". Peaks from the input for which no annotation could be found are
 #'   excluded.
+#' @importFrom rlang .data
 run_ChIPseeker <- function(peaks) {
   # select database for ChIPseeker
   edb <- EnsDb.Hsapiens.v86::EnsDb.Hsapiens.v86
@@ -35,9 +36,9 @@ run_ChIPseeker <- function(peaks) {
     granges_to_dataframe() |>
     tibble::as_tibble() |>
     tidyr::unite(
-      chr,
-      start,
-      end,
+      .data$chr,
+      .data$start,
+      .data$end,
       col = "peak",
       sep = "-",
       remove = FALSE
@@ -46,11 +47,11 @@ run_ChIPseeker <- function(peaks) {
   # for each genomic range, reduce annotations to a single gene
   # by selecting the one with the smallest distance to TSS
   peaks_df |>
-    dplyr::filter(!is.na(SYMBOL)) |>
-    dplyr::arrange(SYMBOL, abs(distanceToTSS)) |>
-    dplyr::distinct(SYMBOL, .keep_all = TRUE) |>
-    dplyr::select(peak, gene = SYMBOL) |>
-    dplyr::arrange(peak)
+    dplyr::filter(!is.na(.data$SYMBOL)) |>
+    dplyr::arrange(.data$SYMBOL, abs(.data$distanceToTSS)) |>
+    dplyr::distinct(.data$SYMBOL, .keep_all = TRUE) |>
+    dplyr::select(.data$peak, gene = .data$SYMBOL) |>
+    dplyr::arrange(.data$peak)
 }
 
 #' Annotate an ATAC-seq count matrix with gene names.
