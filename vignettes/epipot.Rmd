@@ -14,26 +14,24 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this vignette we will go through the process of identifying cell-wise epigenetic potential genes using single cell dataset. We start with two Single-cell datasets i.e. single cell atac-seq and single cell rna-seq. Both these datasets needs to be processed to get cell types. In case the cell-type annotation is not done/difficult for scATAC-seq, cell type labels can be transferred from scRNA-seq. There are multiple ways to do label transfer, we show one way of doing it using scglue pipeline in a separate jupyter notebook. 
+In this vignette we will go through the process of identifying cell-wise epigenetic potential genes using single cell dataset. We start with two exemplary, small single-cell datasets, i.e., scATAC-seq and scRNA-seq. Both these datasets are annotated with cell types.
 
 ```{r message = FALSE}
 library(Seurat)
 library(limma)
+library(ggplot2)
+library(dplyr)
 library(epiPot)
 ```
 
 
 # Load data
 
-In this vignette we assume that the user has single-cell datasets with cell-type annotations for both scRNA-seq and scATAC-seq. Another assumption here is that both datasets have some if not all cell types matching each other. (Note: make sure you dont have situation like cell types in scRNAseq has T-cell and scATAC-seq has T_cell or t_cell.)
+In this vignette we assume that the user has single-cell datasets with cell-type annotations for both scRNA-seq and scATAC-seq. Another assumption here is that both datasets have some if not all cell types matching each other.
 
 ```{r}
-# TODO this data will not be provided with the package,
-# but has to be downloaded, e.g., from Zenodo
-# maybe usethis::use_course() ?
-DATA_PATH <- "/home/wolfgang/Plus/Projects/epipot_data"
-rna_data <- readRDS(file.path(DATA_PATH, 'GSE161382_rna.rds'))
-atac_data <- readRDS(file.path(DATA_PATH, 'GSE161381_atac.rds'))
+rna_data
+atac_data
 ```
 
 
@@ -123,7 +121,15 @@ Parse limma results.
 
 ```{r}
 res <- parse_limma_results(fit)
-# saveRDS(res, file.path(DATA_PATH, "epipot_results.rds"))
 ```
 
 After these steps, `res`  will contain the same data as if we had run the `epigenetic_potential()` function.
+
+Finally, results are shown as a volcano plot.
+
+```{r}
+res |> 
+  filter(!is.na(logFC)) |> 
+  ggplot(aes(logFC, -log10(adj.P.Val))) +
+  geom_point(aes(color = cell))
+```
