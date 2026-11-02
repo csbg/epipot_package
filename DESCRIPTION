@@ -1,7 +1,7 @@
 Package: epiPot
 Type: Package
 Title: Analyze the Epigenetic Potential of Cells in Single-Cell datasets
-Version: 0.0.0.9000
+Version: 0.2.0
 Authors@R:
     c(person(given = "Wolfgang",
              family = "Esser-Skala",
