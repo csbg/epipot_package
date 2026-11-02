@@ -38,7 +38,7 @@ Suggests:
     rmarkdown,
     Seurat
 VignetteBuilder: knitr
-URL: https://github.com/csbg/epipot_package
+URL: https://github.com/csbg/epipot_package, https://csbg.github.io/epipot_package/
 BugReports: https://github.com/csbg/epipot_package/issues
 Imports: 
     ChIPseeker,
