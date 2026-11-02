@@ -1,0 +1,29 @@
+# Package index
+
+## All functions
+
+- [`aggregate_count_matrix()`](https://csbg.github.io/epipot_package/reference/aggregate_count_matrix.md)
+  : Aggregate a count matrix.
+- [`annotate_atac_peaks()`](https://csbg.github.io/epipot_package/reference/annotate_atac_peaks.md)
+  : Annotate an ATAC-seq count matrix with gene names.
+- [`atac_data`](https://csbg.github.io/epipot_package/reference/atac_data.md)
+  : Sample scATAC-seq dataset
+- [`clean_string()`](https://csbg.github.io/epipot_package/reference/clean_string.md)
+  : Remove special characters from a string.
+- [`create_model_frame()`](https://csbg.github.io/epipot_package/reference/create_model_frame.md)
+  : Create a model frame from the merged count matrix.
+- [`epigenetic_potential()`](https://csbg.github.io/epipot_package/reference/epigenetic_potential.md)
+  : Calculate the epigenetic potential.
+- [`granges_to_dataframe()`](https://csbg.github.io/epipot_package/reference/granges_to_dataframe.md)
+  : Convert an annotated GRanges object to a data frame.
+- [`merge_count_matrices()`](https://csbg.github.io/epipot_package/reference/merge_count_matrices.md)
+  : Combine two count matrices.
+- [`parse_limma_results()`](https://csbg.github.io/epipot_package/reference/parse_limma_results.md)
+  : Obtain log-fold changes and p-values for all genes in all cell
+  types.
+- [`rna_data`](https://csbg.github.io/epipot_package/reference/rna_data.md)
+  : Sample scRNA-seq dataset
+- [`run_ChIPseeker()`](https://csbg.github.io/epipot_package/reference/run_ChIPseeker.md)
+  : Run the ChIPseeker algorithm
+- [`scale_rows()`](https://csbg.github.io/epipot_package/reference/scale_rows.md)
+  : Scale the rows of a matrix.

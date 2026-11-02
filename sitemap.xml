@@ -1,0 +1,23 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://csbg.github.io/epipot_package/404.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/LICENSE-text.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/LICENSE.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/articles/epipot.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/articles/index.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/authors.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/index.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/aggregate_count_matrix.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/annotate_atac_peaks.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/atac_data.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/clean_string.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/create_model_frame.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/epigenetic_potential.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/granges_to_dataframe.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/index.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/merge_count_matrices.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/parse_limma_results.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/rna_data.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/run_ChIPseeker.html</loc></url>
+<url><loc>https://csbg.github.io/epipot_package/reference/scale_rows.html</loc></url>
+</urlset>
+
