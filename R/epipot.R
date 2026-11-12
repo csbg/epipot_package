@@ -48,16 +48,22 @@ merge_count_matrices <- function(rna_mat, atac_mat) {
 #' Create a model frame from the merged count matrix.
 #'
 #' @param mat A count matrix containing RNA- and ATAC-seq data.
+#' @param include_condition If true, include the condition as covariate.
 #'
 #' @return A data frame that can be passed to `model.matrix()`.
 #' @export
 #' @importFrom rlang .data
-create_model_frame <- function(mat) {
+create_model_frame <- function(mat, include_condition = FALSE) {
+  if (include_condition)
+    output_colnames <- c("cell", "sample", "tech", "condition")
+  else
+    output_colnames <- c("cell", "sample", "tech")
+
   tibble::tibble(col = colnames(mat)) |>
     tidyr::separate_wider_delim(
       col,
       delim = ":",
-      names = c("cell", "sample", "tech"),
+      names = output_colnames,
       cols_remove = FALSE
     ) |>
     dplyr::mutate(tech = stats::relevel(factor(.data$tech), ref = "RNA")) |>
