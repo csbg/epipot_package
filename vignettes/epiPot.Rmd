@@ -1,8 +1,8 @@
 ---
-title: "The epipot package"
+title: "Simple epiPot analysis"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{epipot}
+  %\VignetteIndexEntry{Simple epiPot analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
