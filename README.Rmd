@@ -34,4 +34,17 @@ renv::install("csbg/epipot_package")
 
 ## Basic usage
 
-see [this vignette](https://csbg.github.io/epipot_package/articles/epipot.html)
+```{r}
+library(epiPot)
+
+res <- epigenetic_potential(
+  rna_counts = rna_data@assays$RNA@counts,
+  rna_cell_types = rna_data@meta.data$cells_short,
+  rna_samples = rna_data@meta.data$orig.ident,
+  atac_counts = atac_data@assays$peaks@counts,
+  atac_cell_types = atac_data@meta.data$cell_type,
+  atac_samples = atac_data@meta.data$orig.ident
+)
+```
+
+The vignette describes a [simple](articles/epiPot.html) epiPot analysis in detail.
