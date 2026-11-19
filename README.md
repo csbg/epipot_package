@@ -4,6 +4,7 @@
 # epiPot
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 The `epiPot` package provides tools for analyzing the **epi**genetic
@@ -11,12 +12,15 @@ The `epiPot` package provides tools for analyzing the **epi**genetic
 
 ## Installation
 
-You can install the development version of epiPot like so:
+Install the package from GitHub, e.g.
 
 ``` r
-# TBD
+remotes::install_github("csbg/epipot_package")
+pak::pkg_install("csbg/epipot_package")
+renv::install("csbg/epipot_package")
 ```
 
 ## Basic usage
 
-c(TBD)
+see [this
+vignette](https://csbg.github.io/epipot_package/articles/epipot.html)

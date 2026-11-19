@@ -7,6 +7,7 @@ output: github_document
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  eval = FALSE,
   comment = "#>",
   fig.path = "man/figures/README-",
   out.width = "100%"
@@ -23,12 +24,14 @@ The `epiPot` package provides tools for analyzing the **epi**genetic **pot**enti
 
 ## Installation
 
-You can install the development version of epiPot like so:
+Install the package from GitHub, e.g.
 
-``` r
-# TBD
+```{r}
+remotes::install_github("csbg/epipot_package")
+pak::pkg_install("csbg/epipot_package")
+renv::install("csbg/epipot_package")
 ```
 
 ## Basic usage
 
-c(TBD)
+see [this vignette](https://csbg.github.io/epipot_package/articles/epipot.html)
