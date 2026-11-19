@@ -551,7 +551,7 @@ plot_summary_table <- function(tbl_summary,
       tbl_summary,
       ggplot2::aes(.data$cell_type, .data$n_deg)
     ) +
-    ggplot2::geom_col(fill = .data$fill_color) +
+    ggplot2::geom_col(fill = fill_color) +
     ggplot2::labs(x = NULL, y = "Number of Genes") +
     theme_epipot(
       base_size = 6,
