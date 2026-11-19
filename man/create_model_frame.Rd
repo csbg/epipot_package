@@ -4,10 +4,12 @@
 \alias{create_model_frame}
 \title{Create a model frame from the merged count matrix.}
 \usage{
-create_model_frame(mat)
+create_model_frame(mat, include_condition = FALSE)
 }
 \arguments{
 \item{mat}{A count matrix containing RNA- and ATAC-seq data.}
+
+\item{include_condition}{If true, include the condition as covariate.}
 }
 \value{
 A data frame that can be passed to `model.matrix()`.
