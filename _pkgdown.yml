@@ -1,4 +1,53 @@
 url: https://csbg.github.io/epipot_package/
 template:
   bootstrap: 5
+  light-switch: true
+authors:
+  footer:
+    roles: [cre, aut, ctb]
+  sidebar:
+    roles: [cre, aut, ctb]
+reference:
+  - title: "Simple epiPot analysis"
+    contents:
+    - epigenetic_potential
+    - aggregate_count_matrix
+    - scale_rows
+    - annotate_atac_peaks
+    - merge_count_matrices
+    - create_model_frame
+    - parse_limma_results
+
+  - title: "Differential epiPot analysis"
+    contents:
+    - assign_epipot_driver
+    - create_contrast_matrix
+    - create_summary_table
+    - extract_interaction_results
+    - extract_rna_de_overlap_results
+    - parse_limma_results_contrast
+
+  - title: "Plotting functions"
+    contents:
+    - plot_driver_percentages
+    - plot_hexbin_scatter
+    - plot_summary_table
+    - theme_epipot
+
+  - title: "Datasets"
+    contents:
+    - rna_data
+    - atac_data
+
+  - title: "Options"
+    contents:
+    - default_options
+
+  - title: "Internal functions"
+    contents:
+    - build_contrast_name
+    - clean_string
+    - granges_to_dataframe
+    - run_ChIPseeker
+
 
