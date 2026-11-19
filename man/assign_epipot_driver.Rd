@@ -4,10 +4,10 @@
 \alias{assign_epipot_driver}
 \title{Determines the epigenetic potential driver}
 \usage{
-assign_epipot_driver(contrast_res, final_results_list)
+assign_epipot_driver(limma_results, final_results_list)
 }
 \arguments{
-\item{contrast_res}{contrast results from `parse_limma_results_contrast()`.}
+\item{limma_results}{contrast results from `parse_limma_results_contrast()`.}
 
 \item{final_results_list}{The RNA list from `extract_rna_de_overlap_results()`.}
 }

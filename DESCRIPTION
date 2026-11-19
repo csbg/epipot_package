@@ -46,11 +46,13 @@ Imports:
     EnsDb.Hsapiens.v86,
     ensembldb,
     GenomicRanges,
+    ggplot2,
     limma,
     Matrix,
     org.Hs.eg.db,
     purrr,
     rlang,
+    stringr,
     tibble,
     tidyr
 Depends: 
