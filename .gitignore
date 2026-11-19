@@ -7,7 +7,6 @@
 .DS_Store
 .quarto
 inst/doc
-docs
 renv
 renv.lock
 .Rprofile
