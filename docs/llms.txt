@@ -1,0 +1,118 @@
+# epiPot
+
+The `epiPot` package provides tools for analyzing the **epi**genetic
+**pot**ential of cells in single-cell data.
+
+## Installation
+
+Install the package from GitHub, e.g.
+
+``` r
+
+remotes::install_github("csbg/epipot_package")
+pak::pkg_install("csbg/epipot_package")
+renv::install("csbg/epipot_package")
+```
+
+## Basic usage
+
+``` r
+
+library(epiPot)
+
+res <- epigenetic_potential(
+  rna_counts = rna_data@assays$RNA@counts,
+  rna_cell_types = rna_data@meta.data$cells_short,
+  rna_samples = rna_data@meta.data$orig.ident,
+  atac_counts = atac_data@assays$peaks@counts,
+  atac_cell_types = atac_data@meta.data$cell_type,
+  atac_samples = atac_data@meta.data$orig.ident
+)
+```
+
+The vignette describes a
+[simple](https://csbg.github.io/epipot_package/articles/epiPot.md)
+epiPot analysis in detail.
+
+# Package index
+
+## Simple epiPot analysis
+
+- [`epigenetic_potential()`](https://csbg.github.io/epipot_package/reference/epigenetic_potential.md)
+  : Calculate the epigenetic potential.
+- [`aggregate_count_matrix()`](https://csbg.github.io/epipot_package/reference/aggregate_count_matrix.md)
+  : Aggregate a count matrix.
+- [`scale_rows()`](https://csbg.github.io/epipot_package/reference/scale_rows.md)
+  : Scale the rows of a matrix.
+- [`annotate_atac_peaks()`](https://csbg.github.io/epipot_package/reference/annotate_atac_peaks.md)
+  : Annotate an ATAC-seq count matrix with gene names.
+- [`merge_count_matrices()`](https://csbg.github.io/epipot_package/reference/merge_count_matrices.md)
+  : Combine two count matrices.
+- [`create_model_frame()`](https://csbg.github.io/epipot_package/reference/create_model_frame.md)
+  : Create a model frame from the merged count matrix.
+- [`parse_limma_results()`](https://csbg.github.io/epipot_package/reference/parse_limma_results.md)
+  : Obtain log-fold changes and p-values for all genes in all cell
+  types.
+
+## Differential epiPot analysis
+
+- [`assign_epipot_driver()`](https://csbg.github.io/epipot_package/reference/assign_epipot_driver.md)
+  : Determines the epigenetic potential driver
+- [`create_contrast_matrix()`](https://csbg.github.io/epipot_package/reference/create_contrast_matrix.md)
+  : Create a contrast matrix for a differential epiPot analysis
+- [`create_summary_table()`](https://csbg.github.io/epipot_package/reference/create_summary_table.md)
+  : Make a summary table.
+- [`extract_interaction_results()`](https://csbg.github.io/epipot_package/reference/extract_interaction_results.md)
+  : Extract interaction results
+- [`extract_rna_de_overlap_results()`](https://csbg.github.io/epipot_package/reference/extract_rna_de_overlap_results.md)
+  : Extract interaction results
+- [`parse_limma_results_contrast()`](https://csbg.github.io/epipot_package/reference/parse_limma_results_contrast.md)
+  : Obtain log-fold changes and p-values from a differential epiPot
+  analysis.
+
+## Plotting functions
+
+- [`plot_driver_percentages()`](https://csbg.github.io/epipot_package/reference/plot_driver_percentages.md)
+  : Plot percentages of epigenetic potential drivers
+- [`plot_hexbin_scatter()`](https://csbg.github.io/epipot_package/reference/plot_hexbin_scatter.md)
+  : Plot RNA vs ATAC change for each gene.
+- [`plot_summary_table()`](https://csbg.github.io/epipot_package/reference/plot_summary_table.md)
+  : Plot a summary table
+- [`theme_epipot()`](https://csbg.github.io/epipot_package/reference/theme_epipot.md)
+  : ggplot2 theme for plotting functions
+
+## Datasets
+
+- [`rna_data`](https://csbg.github.io/epipot_package/reference/rna_data.md)
+  : Sample scRNA-seq dataset
+- [`atac_data`](https://csbg.github.io/epipot_package/reference/atac_data.md)
+  : Sample scATAC-seq dataset
+
+## Options
+
+- [`default_options`](https://csbg.github.io/epipot_package/reference/default_options.md)
+  : Default options for epiPot functions
+
+## Internal functions
+
+- [`build_contrast_name()`](https://csbg.github.io/epipot_package/reference/build_contrast_name.md)
+  : Build contrast names
+- [`clean_string()`](https://csbg.github.io/epipot_package/reference/clean_string.md)
+  : Remove special characters from a string.
+- [`granges_to_dataframe()`](https://csbg.github.io/epipot_package/reference/granges_to_dataframe.md)
+  : Convert an annotated GRanges object to a data frame.
+- [`run_ChIPseeker()`](https://csbg.github.io/epipot_package/reference/run_ChIPseeker.md)
+  : Run the ChIPseeker algorithm
+
+# Articles
+
+### All vignettes
+
+- [Differential epiPot analysis: Prepare
+  data](https://csbg.github.io/epipot_package/articles/differential_1_prepare_data.md):
+- [Differential epiPot analysis: Run
+  epiPot](https://csbg.github.io/epipot_package/articles/differential_2_run_epipot.md):
+- [Differential epiPot analysis: Perform
+  enrichment](https://csbg.github.io/epipot_package/articles/differential_3_perform_enrichment.md):
+- [Simple epiPot
+  analysis](https://csbg.github.io/epipot_package/articles/epiPot.md):
